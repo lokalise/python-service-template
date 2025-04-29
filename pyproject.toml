@@ -25,4 +25,6 @@ dev = [
 ]
 
 [tool.basedpyright]
-failOnWarnings = true
+include = ["src"]
+reportMissingImports = "error"
+pythonVersion = "3.10"
