@@ -54,11 +54,12 @@ USER app
 SHELL ["/bin/bash", "-c"]
 
 # Health check using Python's built-in http.client
-# Checks the /api/v1/health endpoint every 30 seconds
+# Checks the private health endpoint every 30 seconds
+# Includes checks of all critical dependencies
 # Allows 5 seconds for initial startup
 # Retries 3 times before marking unhealthy
 HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
-    CMD python3 -c "import http.client; conn = http.client.HTTPConnection('localhost', ${PORT}); conn.request('GET', '/api/v1/health'); response = conn.getresponse(); exit(0 if response.status == 200 else 1)"
+    CMD python3 -c "import http.client, json; conn = http.client.HTTPConnection('localhost', ${PORT}); conn.request('GET', '/api/v1/health'); response = conn.getresponse(); data = json.loads(response.read()); exit(0 if data.get('heartbeat') == 'HEALTHY' and all(status == 'HEALTHY' for status in data.get('checks', {}).values()) and response.status == 200 else 1)"
 
 # Start the FastAPI application
 CMD fastapi run --port ${PORT} /app/src/python_service_template/app.py
