@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from python_service_template.api.coffee import router as countries_router
+from python_service_template.api.health import router as health_router
 
 
 origins = [
@@ -22,3 +23,4 @@ app.add_middleware(
     allow_headers=["*"],
 )
 app.include_router(countries_router)
+app.include_router(health_router)

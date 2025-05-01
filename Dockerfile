@@ -22,7 +22,7 @@ FROM python:${PYTHON_VERSION}-slim-${DEBIAN_VERSION}
 WORKDIR /app
 COPY --from=builder /app /app
 
-# Create non-root user and set permissions in a single layer
+# Create non-root user
 RUN groupadd -r app && \
     useradd -r -g app app && \
     chown -R app:app /app
@@ -35,4 +35,9 @@ ENV PATH="/app/.venv/bin:$PATH" \
 EXPOSE ${PORT}
 USER app
 SHELL ["/bin/bash", "-c"]
+
+# Add healthcheck using Python's http.client
+HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
+    CMD python3 -c "import http.client; conn = http.client.HTTPConnection('localhost', ${PORT}); conn.request('GET', '/api/v1/health'); response = conn.getresponse(); exit(0 if response.status == 200 else 1)"
+
 CMD fastapi run --port ${PORT} /app/src/python_service_template/app.py
