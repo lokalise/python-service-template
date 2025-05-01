@@ -19,12 +19,20 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 
 FROM python:${PYTHON_VERSION}-slim-${DEBIAN_VERSION}
 
-COPY --from=builder --chown=app:app /app /app
+WORKDIR /app
+COPY --from=builder /app /app
+
+# Create non-root user and set permissions in a single layer
+RUN groupadd -r app && \
+    useradd -r -g app app && \
+    chown -R app:app /app
+
 ARG PORT=8000
 ENV PATH="/app/.venv/bin:$PATH" \
     PORT=${PORT} \
     PYTHONUNBUFFERED=1
 
 EXPOSE ${PORT}
+USER app
 SHELL ["/bin/bash", "-c"]
 CMD fastapi run --port ${PORT} /app/src/python_service_template/app.py
