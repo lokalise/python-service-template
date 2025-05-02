@@ -1,8 +1,12 @@
+import asyncio
+import uvloop
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from python_service_template.api.coffee import router as countries_router
 from python_service_template.api.health import router as health_router
 
+# Configure uvloop as the event loop policy
+asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 
 origins = [
     "http://localhost:3000",
