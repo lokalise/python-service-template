@@ -1,15 +1,18 @@
+import structlog
 from python_service_template.coffee.base import CoffeeClient, CoffeeDrink, CoffeeService
 
 
 class SimpleCoffeeService(CoffeeService):
     def __init__(self, client: CoffeeClient) -> None:
         self.client = client
-    
-    async def turnover(self) -> float:
-        drinks = await self.client.get_all()
-        return sum(drink.price * drink.total_sales for drink in drinks)
+        self.log = structlog.get_logger(__name__).bind(class_name=self.__class__.__name__)
 
     async def recommend(self) -> CoffeeDrink | None:
+        await self.log.adebug("Recommending a drink")
         drinks = await self.client.get_hot()
         espresso = next(drink for drink in drinks if drink.title == "Espresso")
-        return espresso if espresso else None
+        if espresso:
+            await self.log.adebug("Recommending espresso")
+            return espresso
+        await self.log.awarn("Espresso not found")
+        return None
