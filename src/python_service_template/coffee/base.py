@@ -1,5 +1,12 @@
 import abc
-from pydantic import Field, HttpUrl, RootModel, BaseModel
+import typing as t
+from pydantic import (
+    BeforeValidator,
+    Field,
+    HttpUrl,
+    RootModel,
+    BaseModel,
+)
 
 
 class CoffeeDrink(BaseModel):
@@ -7,7 +14,9 @@ class CoffeeDrink(BaseModel):
     title: str
     description: str
     image: HttpUrl
-    ingredients: list[str] = Field(default_factory=list)
+    ingredients: t.Annotated[
+        list[str], BeforeValidator(lambda v: v.split(", ") if isinstance(v, str) else v)
+    ] = Field(default_factory=list)
 
 
 class CoffeeDrinks(RootModel[list[CoffeeDrink]]):

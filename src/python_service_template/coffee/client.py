@@ -4,7 +4,7 @@ from python_service_template.coffee.base import CoffeeClient, CoffeeDrink, Coffe
 
 
 class AsyncCoffeeClient(CoffeeClient):
-    def __init__(self, base_url: str = "https://api.sampleapis.com/coffee/") -> None:
+    def __init__(self, base_url: str) -> None:
         self.base_url = base_url
         self.log = structlog.get_logger(__name__).bind(class_name=self.__class__.__name__)
 

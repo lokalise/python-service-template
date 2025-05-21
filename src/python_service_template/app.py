@@ -4,13 +4,17 @@ import structlog
 import uvicorn
 import uvloop
 import logging
+import typing as t
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from python_service_template.api.coffee import router as countries_router
 from python_service_template.api.health import router as health_router
+from python_service_template.dependencies import settings
+from python_service_template.settings import LoggingConfig
 from fastapi.responses import JSONResponse
 from fastapi.requests import Request
 from fastapi import status
+
 
 # Configure uvloop as the event loop policy
 asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
@@ -47,11 +51,9 @@ async def global_exception_handler(request: Request, exc: Exception) -> JSONResp
     )
 
 
-def main(host: str = "0.0.0.0", port: int = 8000, json_log_format: bool = False):
-    # TODO: Take log level from environment variable
-    log_level = logging.DEBUG
-    
-    if json_log_format:
+def configure_logging(config: LoggingConfig) -> dict[str, t.Any]:
+    log_level = logging._nameToLevel.get(config.level)
+    if config.format == "JSON":
         renderer = structlog.processors.JSONRenderer()
     else:
         renderer = structlog.dev.ConsoleRenderer()
@@ -77,7 +79,10 @@ def main(host: str = "0.0.0.0", port: int = 8000, json_log_format: bool = False)
         stream=sys.stderr,
     )
 
-    LOGGING_CONFIG = {
+    # Logging configuration for uvicorn which uses the standard logging module
+    # The main goal is to render the logs the same way as structlog does
+    # Source: https://www.structlog.org/en/stable/standard-library.html#rendering-using-structlog-based-formatters-within-logging
+    std_logging_config = {
         "version": 1,
         "disable_existing_loggers": False,
         "formatters": {
@@ -103,24 +108,18 @@ def main(host: str = "0.0.0.0", port: int = 8000, json_log_format: bool = False)
             "uvicorn.access": {"handlers": ["structlog"], "level": logging.getLevelName(log_level), "propagate": False},
         },
     }
-
-    uvicorn.run(
-        app,
-        host=host,
-        port=port,
-        log_config=LOGGING_CONFIG,
-        log_level=log_level,
-        access_log=True,
-        reload=False,
-    )
+    return std_logging_config
 
 
 if __name__ == "__main__":
-    import argparse
+    app_settings = settings()
+    std_logging_config = configure_logging(app_settings.logging)
 
-    parser = argparse.ArgumentParser(description="Run the FastAPI app with uvicorn.")
-    parser.add_argument("--host", type=str, default="0.0.0.0", help="Host to bind.")
-    parser.add_argument("--port", type=int, default=8000, help="Port to bind.")
-    parser.add_argument("--json", action="store_true", help="Enable JSON log formatting.")
-    args = parser.parse_args()
-    main(host=args.host, port=args.port, json_log_format=args.json)
+    uvicorn.run(
+        app,
+        host=app_settings.host,
+        port=app_settings.port,
+        log_config=std_logging_config,
+        access_log=True,
+        reload=False,
+    )
