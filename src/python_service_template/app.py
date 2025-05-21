@@ -16,15 +16,6 @@ from fastapi.requests import Request
 from fastapi import status
 
 
-# Configure uvloop as the event loop policy
-asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
-
-origins = [
-    "http://localhost:3000",
-    "http://localhost:5173",
-]
-
-log = structlog.get_logger(__file__)
 app = FastAPI(
     root_path="/api/v1",
     title="Python Service Template",
@@ -33,7 +24,10 @@ app = FastAPI(
 )
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=[
+        "http://localhost:3000",
+        "http://localhost:5173",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -41,6 +35,8 @@ app.add_middleware(
 app.include_router(countries_router)
 app.include_router(health_router)
 
+
+log = structlog.get_logger("exception")
 
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception) -> JSONResponse:
@@ -51,23 +47,20 @@ async def global_exception_handler(request: Request, exc: Exception) -> JSONResp
     )
 
 
-def configure_logging(config: LoggingConfig) -> dict[str, t.Any]:
+def configure_structlog(config: LoggingConfig) -> None:
     log_level = logging._nameToLevel.get(config.level)
     if config.format == "JSON":
         renderer = structlog.processors.JSONRenderer()
     else:
         renderer = structlog.dev.ConsoleRenderer()
-    
-    processors = [
-        structlog.processors.TimeStamper(fmt="iso"),
-        structlog.stdlib.add_log_level,
-        structlog.processors.StackInfoRenderer(),
-        structlog.processors.format_exc_info,
-    ]
-    
+
     structlog.configure(
-        processors=processors + [
-            structlog.stdlib.ProcessorFormatter.wrap_for_formatter,
+        processors=[
+            structlog.processors.TimeStamper(fmt="iso"),
+            structlog.stdlib.add_log_level,
+            structlog.processors.StackInfoRenderer(),
+            structlog.processors.format_exc_info,
+            renderer,
         ],
         logger_factory=structlog.stdlib.LoggerFactory(),
         cache_logger_on_first_use=True,
@@ -79,16 +72,29 @@ def configure_logging(config: LoggingConfig) -> dict[str, t.Any]:
         stream=sys.stderr,
     )
 
-    # Logging configuration for uvicorn which uses the standard logging module
-    # The main goal is to render the logs the same way as structlog does
-    # Source: https://www.structlog.org/en/stable/standard-library.html#rendering-using-structlog-based-formatters-within-logging
-    std_logging_config = {
+
+def create_std_logging_config(config: LoggingConfig) -> dict[str, t.Any]:
+    """Logging configuration for uvicorn which uses the standard logging module
+    The main goal is to render the logs the same way as structlog does
+    Source: https://www.structlog.org/en/stable/standard-library.html#rendering-using-structlog-based-formatters-within-logging
+    """
+    if config.format == "JSON":
+        renderer = structlog.processors.JSONRenderer()
+    else:
+        renderer = structlog.dev.ConsoleRenderer()
+
+    return {
         "version": 1,
         "disable_existing_loggers": False,
         "formatters": {
             "structlog": {
                 "()": "structlog.stdlib.ProcessorFormatter",
-                "foreign_pre_chain": processors,
+                "foreign_pre_chain": [
+                    structlog.processors.TimeStamper(fmt="iso"),
+                    structlog.stdlib.add_log_level,
+                    structlog.processors.StackInfoRenderer(),
+                    structlog.processors.format_exc_info,
+                ],
                 "processors": [
                     structlog.stdlib.ProcessorFormatter.remove_processors_meta,
                     renderer,
@@ -103,23 +109,35 @@ def configure_logging(config: LoggingConfig) -> dict[str, t.Any]:
             },
         },
         "loggers": {
-            "uvicorn": {"handlers": ["structlog"], "level": logging.getLevelName(log_level), "propagate": False},
-            "uvicorn.error": {"level": logging.getLevelName(log_level)},
-            "uvicorn.access": {"handlers": ["structlog"], "level": logging.getLevelName(log_level), "propagate": False},
+            "uvicorn": {
+                "handlers": ["structlog"],
+                "level": config.level.value,
+                "propagate": False,
+            },
+            "uvicorn.error": {
+                "level": config.level.value
+            },
+            "uvicorn.access": {
+                "handlers": ["structlog"],
+                "level": config.level.value,
+                "propagate": False,
+            },
         },
     }
-    return std_logging_config
 
 
 if __name__ == "__main__":
     app_settings = settings()
-    std_logging_config = configure_logging(app_settings.logging)
+    configure_structlog(app_settings.logging)
+
+    # Configure uvloop as the event loop policy
+    asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 
     uvicorn.run(
         app,
         host=app_settings.host,
         port=app_settings.port,
-        log_config=std_logging_config,
+        log_config=create_std_logging_config(app_settings.logging),
         access_log=True,
         reload=False,
     )
