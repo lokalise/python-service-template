@@ -11,9 +11,9 @@ class SimpleCoffeeService(CoffeeService):
     async def recommend(self) -> CoffeeDrink | None:
         await self.log.adebug("Recommending a drink")
         drinks = await self.client.get_hot()
-        espresso = next(drink for drink in drinks if drink.title == "Espresso")
+        espresso = [drink for drink in drinks if drink.title == "Espresso"]
         if espresso:
             await self.log.adebug("Recommending espresso")
-            return espresso
+            return espresso[0]
         await self.log.awarn("Espresso not found")
         return None
