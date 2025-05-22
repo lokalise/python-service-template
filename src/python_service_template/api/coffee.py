@@ -1,8 +1,9 @@
 from typing import Annotated
+
 from fastapi import APIRouter, Depends, HTTPException
+
 from python_service_template.coffee.base import CoffeeDrink, CoffeeService
 from python_service_template.dependencies import coffee_service
-
 
 router = APIRouter(
     prefix="/coffee",

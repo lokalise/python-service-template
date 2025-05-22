@@ -1,9 +1,10 @@
 from fastapi import APIRouter
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class HealthResponse(BaseModel):
-    gitCommitSha: str = "sha"  # This should be dynamically set in a real implementation
+    # This should be dynamically set in a real implementation
+    git_commit_sha: str = Field(default="sha", serialization_alias="gitCommitSha")
     heartbeat: str = "HEALTHY"
     version: str = "1"
 
@@ -34,8 +35,5 @@ async def public_health() -> HealthResponse:
 @router.get("/health")
 async def private_health() -> PrivateHealthResponse:
     """Private health check endpoint with detailed system checks."""
-    checks = {
-        "openai": await check_openai(),
-        "anthropic": await check_anthropic()
-    }
+    checks = {"openai": await check_openai(), "anthropic": await check_anthropic()}
     return PrivateHealthResponse(checks=checks)

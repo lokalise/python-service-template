@@ -1,20 +1,20 @@
 import typing as t
-from fastapi import Depends
 from functools import lru_cache
+
+from fastapi import Depends
+
+from python_service_template.coffee.base import CoffeeClient, CoffeeService
 from python_service_template.coffee.client import AsyncCoffeeClient
 from python_service_template.coffee.service import SimpleCoffeeService
-from python_service_template.coffee.base import CoffeeClient, CoffeeService
 from python_service_template.settings import Settings
 
 
-@lru_cache()
+@lru_cache
 def settings() -> Settings:
     return Settings()
 
 
-def coffee_client(
-    settings: t.Annotated[Settings, Depends(settings)]
-) -> CoffeeClient:
+def coffee_client(settings: t.Annotated[Settings, Depends(settings)]) -> CoffeeClient:
     return AsyncCoffeeClient(base_url=settings.coffee_api.host)
 
 

@@ -1,5 +1,6 @@
 import enum
 import typing as t
+
 from pydantic import BaseModel
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -28,7 +29,7 @@ class Settings(BaseSettings):
     coffee_api: CoffeeApi
 
     model_config = SettingsConfigDict(
-        env_file=(".env.default", ".env"), 
+        env_file=(".env.default", ".env"),
         env_file_encoding="utf-8",
-        env_nested_delimiter="__"
+        env_nested_delimiter="__",
     )

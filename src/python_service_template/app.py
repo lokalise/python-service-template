@@ -1,20 +1,20 @@
 import asyncio
+import logging
 import sys
+import typing as t
+
 import structlog
 import uvicorn
 import uvloop
-import logging
-import typing as t
-from fastapi import FastAPI
+from fastapi import FastAPI, status
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.requests import Request
+from fastapi.responses import JSONResponse
+
 from python_service_template.api.coffee import router as countries_router
 from python_service_template.api.health import router as health_router
 from python_service_template.dependencies import settings
 from python_service_template.settings import LoggingConfig
-from fastapi.responses import JSONResponse
-from fastapi.requests import Request
-from fastapi import status
-
 
 app = FastAPI(
     root_path="/api/v1",
@@ -38,6 +38,7 @@ app.include_router(health_router)
 
 log = structlog.get_logger("exception")
 
+
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception) -> JSONResponse:
     log.error("Unhandled exception", stack_info=True, exc_info=True)
@@ -49,10 +50,6 @@ async def global_exception_handler(request: Request, exc: Exception) -> JSONResp
 
 def configure_structlog(config: LoggingConfig) -> None:
     log_level = logging._nameToLevel.get(config.level)
-    if config.format == "JSON":
-        renderer = structlog.processors.JSONRenderer()
-    else:
-        renderer = structlog.dev.ConsoleRenderer()
 
     structlog.configure(
         processors=[
@@ -60,7 +57,7 @@ def configure_structlog(config: LoggingConfig) -> None:
             structlog.stdlib.add_log_level,
             structlog.processors.StackInfoRenderer(),
             structlog.processors.format_exc_info,
-            renderer,
+            structlog.processors.JSONRenderer() if config.format == "JSON" else structlog.dev.ConsoleRenderer(),
         ],
         logger_factory=structlog.stdlib.LoggerFactory(),
         cache_logger_on_first_use=True,
@@ -74,15 +71,11 @@ def configure_structlog(config: LoggingConfig) -> None:
 
 
 def create_std_logging_config(config: LoggingConfig) -> dict[str, t.Any]:
-    """Logging configuration for uvicorn which uses the standard logging module
+    """
+    Logging configuration for uvicorn which uses the standard logging module
     The main goal is to render the logs the same way as structlog does
     Source: https://www.structlog.org/en/stable/standard-library.html#rendering-using-structlog-based-formatters-within-logging
     """
-    if config.format == "JSON":
-        renderer = structlog.processors.JSONRenderer()
-    else:
-        renderer = structlog.dev.ConsoleRenderer()
-
     return {
         "version": 1,
         "disable_existing_loggers": False,
@@ -97,7 +90,7 @@ def create_std_logging_config(config: LoggingConfig) -> dict[str, t.Any]:
                 ],
                 "processors": [
                     structlog.stdlib.ProcessorFormatter.remove_processors_meta,
-                    renderer,
+                    structlog.processors.JSONRenderer() if config.format == "JSON" else structlog.dev.ConsoleRenderer(),
                 ],
             },
         },
@@ -114,9 +107,7 @@ def create_std_logging_config(config: LoggingConfig) -> dict[str, t.Any]:
                 "level": config.level.value,
                 "propagate": False,
             },
-            "uvicorn.error": {
-                "level": config.level.value
-            },
+            "uvicorn.error": {"level": config.level.value},
             "uvicorn.access": {
                 "handlers": ["structlog"],
                 "level": config.level.value,

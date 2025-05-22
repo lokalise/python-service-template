@@ -1,4 +1,5 @@
 import structlog
+
 from python_service_template.coffee.base import CoffeeClient, CoffeeDrink, CoffeeService
 
 
