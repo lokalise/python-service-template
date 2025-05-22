@@ -15,14 +15,13 @@ repos:
       - id: uv-lock
       - id: uv-sync
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.9.3
+    rev: v0.11.10
     hooks:
-      - id: ruff
-        args: [--fix, --exit-non-zero-on-fix]
+      - id: ruff-check
+        args: [--fix, --verbose]
       - id: ruff-format
   - repo: https://github.com/pre-commit/mirrors-mypy
     rev: v1.15.0
     hooks:
       - id: mypy
         language: system
-        args: [--config-file=pyproject.toml]
