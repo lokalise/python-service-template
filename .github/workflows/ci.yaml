@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - main
+    types:
+      - synchronize
+      - opened
+      - reopened
+      - ready_for_review
+    paths:
+      - src/**
+      - tests/**
+      - pyproject.toml
+      - uv.lock
+
+jobs:
+  Code-Tests:
+    name: Run tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v4
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+      - name: Set up Python
+        run: uv python install
+      - name: Install dependencies
+        run: uv sync
+      - name: Run ruff formatter
+        run: ruff format
+      - name: Run ruff linter
+        run: ruff check
+      - name: Run mypy
+        run: mypy
+      - name: Run pytest
+        run: pytest
