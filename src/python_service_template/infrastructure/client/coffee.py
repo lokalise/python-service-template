@@ -1,13 +1,20 @@
 import aiohttp
 import structlog
 
-from python_service_template.coffee.base import CoffeeClient, CoffeeDrink, CoffeeDrinks
+from python_service_template.domain.coffee.entity import CoffeeDrink, CoffeeDrinks
+from python_service_template.domain.coffee.repository import CoffeeClient
 
 
 class AsyncCoffeeClient(CoffeeClient):
     def __init__(self, base_url: str) -> None:
         self.base_url = base_url
         self.log = structlog.get_logger(__name__).bind(class_name=self.__class__.__name__)
+
+    async def healthcheck(self) -> bool:
+        await self.log.adebug("Performing healthcheck")
+        async with aiohttp.ClientSession() as session:
+            async with session.get(f"{self.base_url}/hot") as response:
+                return response.status == 200
 
     async def get_all(self) -> list[CoffeeDrink]:
         await self.log.adebug("Fetching all coffee drinks")

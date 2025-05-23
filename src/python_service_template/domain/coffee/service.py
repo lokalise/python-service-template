@@ -1,6 +1,16 @@
+import abc
+
 import structlog
 
-from python_service_template.coffee.base import CoffeeClient, CoffeeDrink, CoffeeService
+from python_service_template.domain.coffee.entity import CoffeeDrink
+from python_service_template.domain.coffee.repository import CoffeeClient
+
+
+class CoffeeService(abc.ABC):
+    @abc.abstractmethod
+    async def recommend(self) -> CoffeeDrink | None:
+        """Recommend a drink from a list of drinks"""
+        pass
 
 
 class SimpleCoffeeService(CoffeeService):

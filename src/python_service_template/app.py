@@ -8,8 +8,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.requests import Request
 from fastapi.responses import JSONResponse
 
-from python_service_template.api.coffee import router as countries_router
 from python_service_template.api.health import router as health_router
+from python_service_template.api.v1.coffee import router as countries_router
 from python_service_template.dependencies import settings
 from python_service_template.settings import LoggingConfig
 
@@ -136,7 +136,7 @@ if __name__ == "__main__":
     asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 
     uvicorn.run(
-        app,
+        f"{__name__}:app",
         host=app_settings.host,
         port=app_settings.port,
         log_config=create_std_logging_config(app_settings.logging),
