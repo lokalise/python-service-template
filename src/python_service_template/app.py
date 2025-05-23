@@ -1,11 +1,8 @@
-import asyncio
 import logging
 import sys
 import typing as t
 
 import structlog
-import uvicorn
-import uvloop
 from fastapi import FastAPI, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.requests import Request
@@ -118,6 +115,20 @@ def create_std_logging_config(config: LoggingConfig) -> dict[str, t.Any]:
 
 
 if __name__ == "__main__":
+    import argparse
+    import asyncio
+
+    import uvicorn
+    import uvloop
+
+    parser = argparse.ArgumentParser(description="Run the FastAPI service.")
+    parser.add_argument(
+        "--reload",
+        action="store_true",
+        help="Enable auto-reload for development.",
+    )
+    args = parser.parse_args()
+
     app_settings = settings()
     configure_structlog(app_settings.logging)
 
@@ -130,5 +141,5 @@ if __name__ == "__main__":
         port=app_settings.port,
         log_config=create_std_logging_config(app_settings.logging),
         access_log=True,
-        reload=False,
+        reload=args.reload,
     )
