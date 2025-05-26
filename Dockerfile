@@ -73,5 +73,8 @@ SHELL ["/bin/bash", "-c"]
 HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
     CMD python3 -c "import http.client, json; conn = http.client.HTTPConnection('localhost', ${PORT}); conn.request('GET', '/api/v1/health'); response = conn.getresponse(); data = json.loads(response.read()); exit(0 if data.get('heartbeat') == 'HEALTHY' and all(status == 'HEALTHY' for status in data.get('checks', {}).values()) and response.status == 200 else 1)"
 
+ARG GIT_COMMIT_SHA="sha"
+ENV GIT_COMMIT_SHA=${GIT_COMMIT_SHA}
+
 # Start the FastAPI application
 CMD fastapi run --port ${PORT} /app/src/python_service_template/app.py

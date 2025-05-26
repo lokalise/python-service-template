@@ -1,4 +1,5 @@
 import enum
+import os
 
 from pydantic import BaseModel, Field
 
@@ -33,7 +34,7 @@ class PrivateHealthcheck:
         # More sophisticated checks can be added here
         status = HealthIndicator.HEALTHY if all(checks.values()) else HealthIndicator.UNHEALTHY
         return PrivateHealthResponse(
-            git_commit_sha="sha",
+            git_commit_sha=os.getenv("GIT_COMMIT_SHA", "sha"),
             heartbeat=status,
             version="1",
             checks=checks,
@@ -52,7 +53,7 @@ class PublicHealthcheck:
         # More sophisticated checks can be added here
         status = coffee_status
         return PublicHealthResponse(
-            git_commit_sha="sha",
+            git_commit_sha=os.getenv("GIT_COMMIT_SHA", "sha"),
             heartbeat=status,
             version="1",
         )
