@@ -1,12 +1,36 @@
 # python-service-template
 
+---
+
+## Table of Contents
+
+- [Overview](#overview)
+- [Tech Stack](#tech-stack)
+- [Directory Structure](#directory-structure)
+- [Project Structure](#project-structure)
+- [Getting Started](#getting-started)
+- [Project Lifecycle](#project-lifecycle)
+- [Docker](#docker)
+- [Configuration](#configuration)
+- [API Documentation](#api-documentation)
+- [Code Quality](#code-quality)
+- [Testing](#testing)
+- [Development](#development)
+- [Troubleshooting](#troubleshooting)
+- [CI/CD](#cicd)
+- [License](#license)
+- [Contributing](#contributing)
+
+---
+
 ## Overview
 
 `python-service-template` is a batteries-included template for building robust, production-ready Python backend services with FastAPI.
 
 It comes with:
 - [FastAPI](https://fastapi.tiangolo.com/) for high-performance APIs
-- Modular, domain-driven structure
+- **Domain-Driven Design (DDD) structure** for clear separation of concerns
+- Modular, domain-driven structure: `domain`, `infrastructure`, and `api` layers
 - [Global error handler](src/python_service_template/app.py#L31) for consistent error responses
 - Structured logging with [structlog](https://www.structlog.org/)
 - Type-safe config management with [pydantic-settings](https://docs.pydantic.dev/latest/usage/pydantic_settings/)
@@ -33,6 +57,38 @@ It comes with:
 - **Dependency Management:** [uv](https://github.com/astral-sh/uv)
 - **Containerization:** Docker
 
+## Directory Structure
+
+```text
+src/
+  python_service_template/
+    api/
+      v1/
+    domain/
+      coffee/
+    infrastructure/
+      client/
+  tests/
+Dockerfile
+pyproject.toml
+README.md
+uv.lock
+LICENSE
+```
+
+---
+
+## Project Structure
+
+This project is organized according to Domain-Driven Design (DDD) principles, focusing on clear separation of concerns and business-centric architecture. The main layers are:
+
+- **Domain Layer:** Contains the core business logic, including entities, value objects, aggregates, repositories (as interfaces), and domain services. This layer is independent of frameworks and external technologies.
+- **Application Layer:** Coordinates domain logic to implement use cases. It orchestrates workflows, handles commands/queries, and interacts with the domain layer, but remains decoupled from infrastructure details.
+- **Infrastructure Layer:** Provides technical implementations for things like databases, external APIs, and other integrations. It supplies concrete implementations for repository interfaces and other adapters required by the domain or application layers.
+- **Interface Layer (API):** Handles HTTP requests and responses, validation, and serialization. This layer exposes the application's functionality to the outside world, typically via REST endpoints, and interacts with the application layer.
+
+This structure ensures that business rules remain at the core of the project, with other concerns (like frameworks or external services) layered around them. Each layer has clear responsibilities and dependencies flow inward, keeping the domain model isolated and testable.
+
 ---
 
 ## Getting Started
@@ -50,12 +106,42 @@ It comes with:
    python src/python_service_template/app.py --reload
    ```
 
-### Running with Docker
+## Project Lifecycle
 
+| Task                | Command                                      |
+|---------------------|----------------------------------------------|
+| Install deps        | `uv sync`                                    |
+| Lint                | `ruff src/ tests/`                           |
+| Format              | `ruff format src/ tests/`                    |
+| Type check          | `mypy src/ tests/`                           |
+| Run tests           | `pytest`                                     |
+| Run dev server      | `python src/python_service_template/app.py --reload` |
+| Run pre-commit      | `uvx pre-commit run --all-files`             |
+| Build Docker image  | `docker buildx build ...`                    |
+| Run Docker          | `docker run --env-file .env.default -p 8000:8000 python-service-template` |
+
+---
+
+## Docker
+
+This project includes first-class Docker support for local and production use.
+
+**Build the image:**
 ```sh
-docker buildx build -t python-service-template .
-docker run --env-file .env -p 8000:8000 python-service-template
+docker buildx build \
+   --build-arg GIT_COMMIT_SHA=$(git rev-parse --short HEAD) \
+   --tag python-service-template \
+   .
 ```
+
+**Run the container:**
+```sh
+docker run --env-file .env.default -p 8000:8000 python-service-template
+```
+
+- The container uses environment variables from `.env.default` (or your own `.env`).
+- The default entrypoint runs the FastAPI app on port 8000.
+- For local development, you can mount your code as a volume and override the command if needed.
 
 ---
 
@@ -63,38 +149,31 @@ docker run --env-file .env -p 8000:8000 python-service-template
 
 All configuration is managed via environment variables. See `.env.default` for available options:
 
-- `HOST` - Host to bind (default: `127.0.0.1`)
-- `PORT` - Port to bind (default: `8000`)
-- `LOGGING__LEVEL` - Logging level (`DEBUG`, `INFO`, etc.)
-- `LOGGING__FORMAT` - Logging format (`PLAIN` or `JSON`)
-- `COFFEE_API__HOST` - Base URL for the Coffee API
+| Variable            | Description                        | Default         |
+|---------------------|------------------------------------|-----------------|
+| `HOST`              | Host to bind                       | `127.0.0.1`     |
+| `PORT`              | Port to bind                       | `8000`          |
+| `LOGGING__LEVEL`    | Logging level (`DEBUG`, `INFO`, etc.) | `INFO`       |
+| `LOGGING__FORMAT`   | Logging format (`PLAIN` or `JSON`) | `PLAIN`         |
+| `COFFEE_API__HOST`  | Base URL for the Coffee API        | *(none)*        |
 
 ---
 
-## Project Structure
+## API Documentation
 
-The codebase follows a modular, domain-driven structure. Main components include:
-- API route definitions
-- Domain modules (e.g., coffee)
-- Dependency injection setup
-- Configuration models
-- Tests and CI/CD configuration
+- **Swagger UI:** [http://localhost:8000/docs](http://localhost:8000/docs)
+- **OpenAPI schema:** [http://localhost:8000/openapi.json](http://localhost:8000/openapi.json)
+
+All endpoints are organized under the `api/` layer, with versioning support (e.g., `api/v1/`).
 
 ---
 
-## Endpoints
+## Code Quality
 
-This template uses FastAPI, which provides automatic and interactive API documentation at `/docs` when the service is running.
-
----
-
-## Pre-commit Hooks
-
-This template comes with a pre-configured set of pre-commit hooks for linting, formatting, type checking, and more. To enable them, run:
-
-```sh
-uvx pre-commit run --all-files
-```
+- **Lint:** `ruff check --fix`
+- **Format:** `ruff format`
+- **Type check:** `mypy`
+- **Pre-commit hooks:** `uvx pre-commit run --all-files`
 
 ---
 
@@ -122,6 +201,12 @@ python src/python_service_template/app.py --reload
 
 - If you encounter port conflicts, ensure no other process is using the configured port (default: 8000).
 - For Docker issues, rebuild the image after dependency or config changes.
+
+---
+
+## CI/CD
+
+Continuous Integration runs on every PR and push to `main`. See `.github/workflows/ci.yml` for details. The workflow checks lint, type checks, tests, and builds the Docker image.
 
 ---
 
