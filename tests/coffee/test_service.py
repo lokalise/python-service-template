@@ -2,8 +2,9 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from python_service_template.coffee.base import CoffeeClient, CoffeeDrink
-from python_service_template.coffee.service import SimpleCoffeeService
+from python_service_template.domain.coffee.entity import CoffeeDrink
+from python_service_template.domain.coffee.repository import CoffeeClient
+from python_service_template.domain.coffee.service import SimpleCoffeeService
 
 
 @pytest.mark.asyncio
