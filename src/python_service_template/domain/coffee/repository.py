@@ -11,7 +11,7 @@ class CoffeeClient(abc.ABC):
 
     @abc.abstractmethod
     async def get_all(self) -> list[CoffeeDrink]:
-        """Get all countries"""
+        """Get all drinks"""
         pass
 
     @abc.abstractmethod

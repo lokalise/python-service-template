@@ -1,8 +1,34 @@
+import typing as t
+
 import aiohttp
 import structlog
+from pydantic import BaseModel, BeforeValidator, Field, HttpUrl, RootModel
 
-from python_service_template.domain.coffee.entity import CoffeeDrink, CoffeeDrinks
+from python_service_template.domain.coffee.entity import CoffeeDrink
 from python_service_template.domain.coffee.repository import CoffeeClient
+
+
+class CoffeeDrinkDTO(BaseModel):
+    id: int
+    title: str
+    description: str
+    image: HttpUrl
+    ingredients: t.Annotated[list[str], BeforeValidator(lambda v: v.split(", ") if isinstance(v, str) else v)] = Field(
+        default_factory=list
+    )
+
+    def to_domain(self) -> CoffeeDrink:
+        return CoffeeDrink(
+            id=self.id,
+            title=self.title,
+            description=self.description,
+            image=self.image,
+            ingredients=self.ingredients,
+        )
+
+
+class CoffeeDrinksDTO(RootModel[list[CoffeeDrinkDTO]]):
+    root: list[CoffeeDrinkDTO]
 
 
 class AsyncCoffeeClient(CoffeeClient):
@@ -26,8 +52,8 @@ class AsyncCoffeeClient(CoffeeClient):
             async with session.get(f"{self.base_url}/hot") as response:
                 if response.status == 200:
                     deserialized = await response.json()
-                    countries = CoffeeDrinks.model_validate(deserialized)
-                    return countries.root
+                    drinks = CoffeeDrinksDTO.model_validate(deserialized)
+                    return [drink.to_domain() for drink in drinks.root]
                 else:
                     raise Exception(f"Error fetching data: {response.status}")
 
@@ -37,7 +63,7 @@ class AsyncCoffeeClient(CoffeeClient):
             async with session.get(f"{self.base_url}/iced") as response:
                 if response.status == 200:
                     deserialized = await response.json()
-                    countries = CoffeeDrinks.model_validate(deserialized)
-                    return countries.root
+                    drinks = CoffeeDrinksDTO.model_validate(deserialized)
+                    return [drink.to_domain() for drink in drinks.root]
                 else:
                     raise Exception(f"Error fetching data: {response.status}")

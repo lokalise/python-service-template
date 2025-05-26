@@ -9,7 +9,7 @@ from fastapi.requests import Request
 from fastapi.responses import JSONResponse
 
 from python_service_template.api.health import router as health_router
-from python_service_template.api.v1.coffee import router as countries_router
+from python_service_template.api.v1.coffee import router as coffee_router
 from python_service_template.dependencies import settings
 from python_service_template.settings import LoggingConfig
 
@@ -29,7 +29,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-app.include_router(countries_router)
+app.include_router(coffee_router)
 app.include_router(health_router)
 
 
