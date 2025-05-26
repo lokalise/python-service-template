@@ -30,10 +30,10 @@ jobs:
       - name: Install dependencies
         run: uv sync
       - name: Run ruff formatter
-        run: ruff format
+        run: uv run ruff format
       - name: Run ruff linter
-        run: ruff check
+        run: uv run ruff check
       - name: Run mypy
-        run: mypy
+        run: uv run mypy
       - name: Run pytest
-        run: pytest
+        run: uv run pytest
