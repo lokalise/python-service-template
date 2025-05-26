@@ -7,6 +7,12 @@ ARG DEBIAN_VERSION=bookworm
 # Builder stage - uses uv for faster, more reliable dependency installation
 FROM ghcr.io/astral-sh/uv:python${PYTHON_VERSION}-${DEBIAN_VERSION}-slim AS builder
 
+RUN set -ex && \
+    apt-get update && \
+    apt-get upgrade -y && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
 ENV UV_COMPILE_BYTECODE=1 \
     UV_LINK_MODE=copy \
     UV_PYTHON_DOWNLOADS=0
@@ -29,6 +35,12 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 
 # Final stage - minimal runtime image
 FROM python:${PYTHON_VERSION}-slim-${DEBIAN_VERSION}
+
+RUN set -ex && \
+    apt-get update && \
+    apt-get upgrade -y && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
