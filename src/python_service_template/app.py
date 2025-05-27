@@ -1,6 +1,7 @@
 import logging
 import sys
 import typing as t
+from contextlib import asynccontextmanager
 
 import structlog
 from fastapi import FastAPI, status
@@ -43,6 +44,13 @@ async def global_exception_handler(request: Request, exc: Exception) -> JSONResp
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         content={"detail": "Internal Server Error"},
     )
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    log.info("Starting application")
+    yield
+    log.info("Shutting down application")
 
 
 def configure_structlog(config: LoggingConfig) -> None:
