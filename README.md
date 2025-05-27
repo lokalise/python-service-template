@@ -46,7 +46,7 @@ It comes with:
 
 ## Tech Stack
 
-- **Language:** Python 3.10+
+- **Language:** Python 3.13+
 - **Web Framework:** FastAPI
 - **Async Runtime:** uvicorn, uvloop
 - **Config:** pydantic, pydantic-settings

@@ -1,7 +1,7 @@
 # Heavily inspired by: https://github.com/astral-sh/uv-docker-example/blob/main/multistage.Dockerfile
 
 # Build arguments for flexibility in base image selection
-ARG PYTHON_VERSION=3.10
+ARG PYTHON_VERSION=3.13
 ARG DEBIAN_VERSION=bookworm
 
 # Builder stage - uses uv for faster, more reliable dependency installation
