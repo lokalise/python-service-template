@@ -12,7 +12,7 @@ class CoffeeDrinkDTO(BaseModel):
     id: int
     title: str
     description: str
-    image: HttpUrl
+    image: t.Annotated[HttpUrl | None, BeforeValidator(lambda v: v if "https://" in v else None)]
     ingredients: t.Annotated[list[str], BeforeValidator(lambda v: v.split(", ") if isinstance(v, str) else v)] = Field(
         default_factory=list
     )

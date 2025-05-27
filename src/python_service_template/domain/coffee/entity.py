@@ -5,5 +5,5 @@ class CoffeeDrink(BaseModel):
     id: int
     title: str
     description: str
-    image: HttpUrl
+    image: HttpUrl | None
     ingredients: list[str]
