@@ -3,6 +3,12 @@ import abc
 from python_service_template.domain.coffee.entity import CoffeeDrink
 
 
+class CoffeeClientError(Exception):
+    """Custom exception for errors in CoffeeClient."""
+
+    pass
+
+
 class CoffeeClient(abc.ABC):
     @abc.abstractmethod
     async def healthcheck(self) -> bool:

@@ -32,7 +32,8 @@ class PrivateHealthcheck:
             coffee_status = HealthIndicator.HEALTHY
         checks = {"coffee": coffee_status}
         # More sophisticated checks can be added here
-        status = HealthIndicator.HEALTHY if all(checks.values()) else HealthIndicator.UNHEALTHY
+        all_healthy = all([v == HealthIndicator.HEALTHY for v in checks.values()])
+        status = HealthIndicator.HEALTHY if all_healthy else HealthIndicator.UNHEALTHY
         return PrivateHealthResponse(
             git_commit_sha=os.getenv("GIT_COMMIT_SHA", "sha"),
             heartbeat=status,

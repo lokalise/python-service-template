@@ -5,7 +5,7 @@ import structlog
 from pydantic import BaseModel, BeforeValidator, Field, HttpUrl, RootModel
 
 from python_service_template.domain.coffee.entity import CoffeeDrink
-from python_service_template.domain.coffee.repository import CoffeeClient
+from python_service_template.domain.coffee.repository import CoffeeClient, CoffeeClientError
 
 
 class CoffeeDrinkDTO(BaseModel):
@@ -52,10 +52,13 @@ class AsyncCoffeeClient(CoffeeClient):
             async with session.get(f"{self.base_url}/hot") as response:
                 if response.status == 200:
                     deserialized = await response.json()
-                    drinks = CoffeeDrinksDTO.model_validate(deserialized)
+                    try:
+                        drinks = CoffeeDrinksDTO.model_validate(deserialized)
+                    except Exception as exc:
+                        raise CoffeeClientError("Malformed data from /hot endpoint") from exc
                     return [drink.to_domain() for drink in drinks.root]
                 else:
-                    raise Exception(f"Error fetching data: {response.status}")
+                    raise CoffeeClientError(f"Error fetching data: {response.status}")
 
     async def get_iced(self) -> list[CoffeeDrink]:
         await self.log.adebug("Fetching iced coffee drinks")
@@ -63,7 +66,10 @@ class AsyncCoffeeClient(CoffeeClient):
             async with session.get(f"{self.base_url}/iced") as response:
                 if response.status == 200:
                     deserialized = await response.json()
-                    drinks = CoffeeDrinksDTO.model_validate(deserialized)
+                    try:
+                        drinks = CoffeeDrinksDTO.model_validate(deserialized)
+                    except Exception as exc:
+                        raise CoffeeClientError("Malformed data from /iced endpoint") from exc
                     return [drink.to_domain() for drink in drinks.root]
                 else:
-                    raise Exception(f"Error fetching data: {response.status}")
+                    raise CoffeeClientError(f"Error fetching data: {response.status}")
