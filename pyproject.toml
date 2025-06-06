@@ -1,0 +1,77 @@
+[project]
+name = "python-service-template"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "aiohttp~=3.11.0",
+    "fastapi[standard]~=0.115.0",
+    "pydantic~=2.11.0",
+    "pydantic-settings~=2.9.1",
+    "structlog~=25.3.0",
+    "uvloop~=0.21.0",
+]
+
+
+[project.scripts]
+example = "python_service_template:main"
+
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+
+[dependency-groups]
+dev = [
+    "mypy~=1.15.0",
+    "pytest~=8.3.0",
+    "pytest-aiohttp~=1.1.0",
+    "pytest-asyncio~=0.26.0",
+    "ruff~=0.11.0",
+]
+
+
+[tool.mypy]
+plugins = [
+    "pydantic.mypy",
+]
+files = ["src", "tests"]
+python_version = "3.13"
+ignore_missing_imports = false
+
+[tool.pydantic-mypy]
+init_forbid_extra = true
+init_typed = true
+warn_required_dynamic_aliases = true
+warn_untyped_fields = true
+
+
+[tool.ruff]
+line-length = 120
+target-version = "py310"
+include = ["src/**/*.py", "tests/**/*.py"]
+
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle errors
+    "F",    # pyflakes
+    "I",    # isort
+    "UP",   # pyupgrade
+    "B",    # flake8-bugbear
+    "C90",  # mccabe complexity
+    "N",    # pep8-naming
+]
+exclude = [
+    ".git",
+    "__pycache__",
+    "build",
+    "dist",
+    ".venv",
+    "env",
+]
+
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
